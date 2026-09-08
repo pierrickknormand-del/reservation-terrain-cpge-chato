@@ -8,6 +8,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-8 font-sans">
   <div class="max-w-5xl mx-auto space-y-8">
@@ -64,7 +66,7 @@
         </div>
       </div>
 
-      <!-- COLONNE DROITE : FORMULAIRE RESPONSABLE -->
+      <!-- COLONNE DROITE : FORMULAIRE DU RESPONSABLE -->
       <div class="lg:col-span-7">
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
@@ -152,7 +154,7 @@
           <i data-lucide="check-circle" class="w-6 h-6"></i>
         </div>
         <h3 class="text-xl font-bold text-slate-900">Réservation validée</h3>
-        <p class="text-xs text-slate-500">Le terrain est réservé pour votre classe.</p>
+        <p class="text-xs text-slate-500">Le créneau est désormais bloqué dans la base de données.</p>
       </div>
 
       <div class="bg-slate-50 p-4 rounded-xl space-y-2.5 text-sm border border-slate-100">
@@ -177,6 +179,11 @@
   <script>
     lucide.createIcons();
 
+    // Connexion Supabase
+    const SUPABASE_URL = "https://wmlziwtvoftjcgxmxajm.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_YV0umDU5q_5xORqMAzht4g_qeQov_vJ";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const SLOTS = [
       { id: "1", start: "15:00", end: "16:30" },
       { id: "2", start: "16:30", end: "18:00" },
@@ -185,6 +192,7 @@
 
     let selectedSlot = null;
     let selectedDate = "";
+    let bookedSlotIds = [];
 
     const dateInput = document.getElementById("bookingDate");
     const slotsContainer = document.getElementById("slotsContainer");
@@ -203,7 +211,7 @@
       errorMessage.textContent = "";
     }
 
-    dateInput.addEventListener("change", (e) => {
+    dateInput.addEventListener("change", async (e) => {
       clearError();
       selectedSlot = null;
       submitBtn.disabled = true;
@@ -222,8 +230,23 @@
         return;
       }
 
-      renderSlots();
+      // Récupération des réservations existantes pour la date sélectionnée
+      slotsList.innerHTML = "<p class='text-xs text-slate-400'>Chargement des disponibilités...</p>";
       slotsContainer.classList.remove("hidden");
+
+      const { data, error } = await sb
+        .from('bookings')
+        .select('slot_id')
+        .eq('date', selectedDate);
+
+      if (error) {
+        showError("Impossible de vérifier les créneaux disponibles.");
+        bookedSlotIds = [];
+      } else {
+        bookedSlotIds = data.map(item => item.slot_id);
+      }
+
+      renderSlots();
     });
 
     function renderSlots() {
@@ -231,12 +254,17 @@
       SLOTS.forEach(slot => {
         const btn = document.createElement("button");
         btn.type = "button";
+        const isBooked = bookedSlotIds.includes(slot.id);
         const isSelected = selectedSlot && selectedSlot.id === slot.id;
         
+        btn.disabled = isBooked;
+
         btn.className = `w-full flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition ${
-          isSelected 
-            ? "bg-slate-900 text-white border-slate-900 shadow-sm" 
-            : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
+          isBooked
+            ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+            : isSelected 
+              ? "bg-slate-900 text-white border-slate-900 shadow-sm" 
+              : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
         }`;
 
         btn.innerHTML = `
@@ -245,34 +273,59 @@
             ${slot.start} - ${slot.end}
           </span>
           <span class="text-xs uppercase tracking-wider font-semibold">
-            ${isSelected ? "Sélectionné" : "Disponible"}
+            ${isBooked ? "Occupé" : isSelected ? "Sélectionné" : "Disponible"}
           </span>
         `;
 
-        btn.addEventListener("click", () => {
-          selectedSlot = slot;
-          submitBtn.disabled = false;
-          renderSlots();
-        });
+        if (!isBooked) {
+          btn.addEventListener("click", () => {
+            selectedSlot = slot;
+            submitBtn.disabled = false;
+            renderSlots();
+          });
+        }
 
         slotsList.appendChild(btn);
       });
       lucide.createIcons();
     }
 
-    // GESTION DU FORMULAIRE
+    // ENREGISTREMENT DANS SUPABASE
     const form = document.getElementById("bookingForm");
     const modal = document.getElementById("modal");
 
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!selectedDate || !selectedSlot) return;
 
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Validation en cours...";
+
+      const newBooking = {
+        date: selectedDate,
+        slot_id: selectedSlot.id,
+        first_name: document.getElementById("firstName").value,
+        last_name: document.getElementById("lastName").value,
+        email: document.getElementById("email").value,
+        track: document.getElementById("track").value,
+        activity: document.getElementById("activity").value
+      };
+
+      const { error } = await sb.from('bookings').insert([newBooking]);
+
+      submitBtn.textContent = "Confirmer la réservation";
+
+      if (error) {
+        showError("Ce créneau vient déjà d'être réservé par une autre personne.");
+        submitBtn.disabled = false;
+        return;
+      }
+
       document.getElementById("summaryDate").textContent = selectedDate;
       document.getElementById("summarySlot").textContent = `${selectedSlot.start} - ${selectedSlot.end}`;
-      document.getElementById("summaryActivity").textContent = document.getElementById("activity").value;
-      document.getElementById("summaryTrack").textContent = document.getElementById("track").value;
-      document.getElementById("summaryName").textContent = `${document.getElementById("firstName").value} ${document.getElementById("lastName").value}`;
+      document.getElementById("summaryActivity").textContent = newBooking.activity;
+      document.getElementById("summaryTrack").textContent = newBooking.track;
+      document.getElementById("summaryName").textContent = `${newBooking.first_name} ${newBooking.last_name}`;
 
       modal.classList.remove("hidden");
     });
@@ -286,7 +339,7 @@
       submitBtn.disabled = true;
     });
 
-    // GENERATION .ICS
+    // TÉLÉCHARGEMENT .ICS
     document.getElementById("icsBtn").addEventListener("click", () => {
       const [sh, sm] = selectedSlot.start.split(":");
       const [eh, em] = selectedSlot.end.split(":");
@@ -294,12 +347,12 @@
       const dEnd = new Date(selectedDate); dEnd.setHours(eh, em);
       const formatICS = (d) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
-      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Réservation Terrain - ${document.getElementById("activity").value}\nDTSTART:${formatICS(dStart)}\nDTEND:${formatICS(dEnd)}\nDESCRIPTION:Responsable : ${document.getElementById("firstName").value} ${document.getElementById("lastName").value} (${document.getElementById("track").value})\nEND:VEVENT\nEND:VCALENDAR`;
+      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Terrain CPGE - ${document.getElementById("activity").value}\nDTSTART:${formatICS(dStart)}\nDTEND:${formatICS(dEnd)}\nDESCRIPTION:Réservation effectuée par ${document.getElementById("firstName").value} ${document.getElementById("lastName").value} (${document.getElementById("track").value})\nEND:VEVENT\nEND:VCALENDAR`;
 
       const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `terrain-${selectedDate}.ics`;
+      a.download = `reservation-terrain-${selectedDate}.ics`;
       a.click();
     });
   </script>
