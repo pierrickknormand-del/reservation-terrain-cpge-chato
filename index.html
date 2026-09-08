@@ -211,6 +211,8 @@
       errorMessage.textContent = "";
     }
 
+    let bookingsForDate = []; // Contient les réservations du jour avec leur filière
+
     dateInput.addEventListener("change", async (e) => {
       clearError();
       selectedSlot = null;
@@ -230,20 +232,20 @@
         return;
       }
 
-      // Récupération des réservations existantes pour la date sélectionnée
+      // Récupération des créneaux ET de la filière associée
       slotsList.innerHTML = "<p class='text-xs text-slate-400'>Chargement des disponibilités...</p>";
       slotsContainer.classList.remove("hidden");
 
       const { data, error } = await sb
         .from('bookings')
-        .select('slot_id')
+        .select('slot_id, track')
         .eq('date', selectedDate);
 
       if (error) {
         showError("Impossible de vérifier les créneaux disponibles.");
-        bookedSlotIds = [];
+        bookingsForDate = [];
       } else {
-        bookedSlotIds = data.map(item => item.slot_id);
+        bookingsForDate = data;
       }
 
       renderSlots();
@@ -254,18 +256,52 @@
       SLOTS.forEach(slot => {
         const btn = document.createElement("button");
         btn.type = "button";
-        const isBooked = bookedSlotIds.includes(slot.id);
+        
+        // On vérifie si le créneau est réservé et on récupère la filière
+        const booking = bookingsForDate.find(b => b.slot_id === slot.id);
+        const isBooked = !!booking;
         const isSelected = selectedSlot && selectedSlot.id === slot.id;
         
         btn.disabled = isBooked;
 
         btn.className = `w-full flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition ${
           isBooked
-            ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+            ? "bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed"
             : isSelected 
               ? "bg-slate-900 text-white border-slate-900 shadow-sm" 
               : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
         }`;
+
+        // Affichage du statut avec la filière si réservé
+        const statusHtml = isBooked 
+          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-200 text-slate-700 text-xs font-semibold">
+               <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+               Occupé (${booking.track})
+             </span>`
+          : `<span class="text-xs uppercase tracking-wider font-semibold">
+               ${isSelected ? "Sélectionné" : "Disponible"}
+             </span>`;
+
+        btn.innerHTML = `
+          <span class="flex items-center gap-2">
+            <i data-lucide="clock" class="w-4 h-4"></i>
+            ${slot.start} - ${slot.end}
+          </span>
+          ${statusHtml}
+        `;
+
+        if (!isBooked) {
+          btn.addEventListener("click", () => {
+            selectedSlot = slot;
+            submitBtn.disabled = false;
+            renderSlots();
+          });
+        }
+
+        slotsList.appendChild(btn);
+      });
+      lucide.createIcons();
+    }
 
         btn.innerHTML = `
           <span class="flex items-center gap-2">
