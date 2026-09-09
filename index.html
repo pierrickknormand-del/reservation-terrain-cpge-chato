@@ -3,170 +3,174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Réservation Terrain Sportif - CPGE</title>
+  <title>Sport CPGE - Réservations & Tournoi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-8 font-sans">
-  <div class="max-w-5xl mx-auto space-y-8">
+  <div class="max-w-5xl mx-auto space-y-6">
     
-    <header class="space-y-2">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold tracking-wide uppercase">
-        Plateforme Officielle
+    <!-- EN-TÊTE & NAVIGATION -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold tracking-wide uppercase mb-2">
+          Plateforme Officielle CPGE
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900">
+          Terrain des Prépa
+        </h1>
+        <p class="text-slate-500 text-sm">Année scolaire 2026 / 2027</p>
       </div>
-      <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-        Réservation du Terrain Sportif
-      </h1>
-      <p class="text-slate-500">
-        Classes Préparatoires aux Grandes Écoles — Année scolaire 2026 / 2027
-      </p>
+
+      <!-- ONGLETS -->
+      <nav class="flex p-1 bg-slate-200 rounded-xl max-w-fit">
+        <button id="tabBookingBtn" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-white text-slate-900 shadow-sm flex items-center gap-2">
+          <i data-lucide="calendar" class="w-4 h-4"></i> Réservations
+        </button>
+        <button id="tabTournamentBtn" class="px-4 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 flex items-center gap-2">
+          <i data-lucide="trophy" class="w-4 h-4"></i> Tournoi Foot
+        </button>
+      </nav>
     </header>
 
-    <div id="errorBanner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl flex items-start gap-3">
-      <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 shrink-0 mt-0.5"></i>
-      <p id="errorMessage" class="text-red-700 text-sm font-medium"></p>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      
-      <!-- COLONNE GAUCHE -->
-      <div class="lg:col-span-5 space-y-6">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-          <h2 class="text-lg font-semibold flex items-center gap-2">
-            <i data-lucide="calendar" class="w-5 h-5 text-slate-400"></i>
-            Date & Créneau
-          </h2>
-          
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">
-              Jour de réservation (Semaine uniquement)
-            </label>
-            <input 
-              type="date"
-              id="bookingDate"
-              min="2026-09-01"
-              max="2027-06-30"
-              class="w-full rounded-xl border border-slate-300 p-2.5 text-sm focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition"
-            />
-            <p class="text-xs text-slate-400 mt-1.5">Période active : 01/09/2026 au 30/06/2027</p>
-          </div>
-
-          <div id="slotsContainer" class="hidden pt-4 border-t border-slate-100 space-y-3">
-            <label class="block text-sm font-medium text-slate-700">
-              Créneaux disponibles (1 h 30)
-            </label>
-            <div id="slotsList" class="space-y-2.5"></div>
-          </div>
-        </div>
+    <!-- SECTION 1 : RÉSERVATIONS -->
+    <section id="sectionBooking" class="space-y-6">
+      <div id="errorBanner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl flex items-start gap-3">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 shrink-0 mt-0.5"></i>
+        <p id="errorMessage" class="text-red-700 text-sm font-medium"></p>
       </div>
 
-      <!-- COLONNE DROITE -->
-      <div class="lg:col-span-7">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
-            <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
-            Informations du responsable
-          </h2>
-          
-          <form id="bookingForm" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Prénom</label>
-                <input required type="text" id="firstName" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition" placeholder="Camille" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Nom</label>
-                <input required type="text" id="lastName" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition" placeholder="Dubois" />
-              </div>
-            </div>
-
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Date & Créneaux -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <i data-lucide="clock" class="w-5 h-5 text-slate-400"></i> Date & Créneau
+            </h2>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
-                <i data-lucide="mail" class="w-4 h-4 text-slate-400"></i>
-                Email institutionnel
-              </label>
-              <input required type="email" id="email" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition" placeholder="camille.dubois@lycee.fr" />
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Jour de réservation (Semaine)</label>
+              <input type="date" id="bookingDate" min="2026-09-01" max="2027-06-30" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-800" />
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
-                  <i data-lucide="graduation-cap" class="w-4 h-4 text-slate-400"></i>
-                  Filière CPGE
-                </label>
-                <select required id="track" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm bg-white focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition">
-                  <option value="">Sélectionner...</option>
-                  <optgroup label="Scientifiques">
-                    <option value="MPSI">MPSI</option>
-                    <option value="MP2I">MP2I</option>
-                    <option value="PCSI">PCSI</option>
-                    <option value="PTSI">PTSI</option>
-                    <option value="BCPST">BCPST</option>
-                  </optgroup>
-                  <optgroup label="Économiques & Commerciales">
-                    <option value="ECG">ECG</option>
-                    <option value="ECT">ECT</option>
-                  </optgroup>
-                  <optgroup label="Littéraires">
-                    <option value="A/L">A/L</option>
-                    <option value="B/L">B/L</option>
-                    <option value="Chartes">Chartes</option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
-                  <i data-lucide="activity" class="w-4 h-4 text-slate-400"></i>
-                  Activité prévue
-                </label>
-                <input required type="text" id="activity" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none transition" placeholder="Football, Basket..." />
-              </div>
+            <div id="slotsContainer" class="hidden pt-4 border-t border-slate-100 space-y-3">
+              <label class="block text-sm font-medium text-slate-700">Créneaux disponibles</label>
+              <div id="slotsList" class="space-y-2.5"></div>
             </div>
+          </div>
+        </div>
 
-            <div class="pt-4">
-              <button 
-                type="submit" 
-                id="submitBtn" 
-                disabled 
-                class="w-full bg-slate-900 text-white font-medium py-3 rounded-xl hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-              >
+        <!-- Formulaire -->
+        <div class="lg:col-span-7">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
+              <i data-lucide="user" class="w-5 h-5 text-slate-400"></i> Responsable
+            </h2>
+            <form id="bookingForm" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">Prénom</label>
+                  <input required type="text" id="firstName" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm" placeholder="Camille" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">Nom</label>
+                  <input required type="text" id="lastName" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm" placeholder="Dubois" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Email institutionnel</label>
+                <input required type="email" id="email" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm" placeholder="camille.dubois@lycee.fr" />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">Filière</label>
+                  <select required id="track" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm bg-white">
+                    <option value="">Sélectionner...</option>
+                    <optgroup label="Scientifiques">
+                      <option value="MPSI">MPSI</option><option value="MP2I">MP2I</option><option value="PCSI">PCSI</option><option value="PTSI">PTSI</option><option value="BCPST">BCPST</option>
+                    </optgroup>
+                    <optgroup label="Économiques">
+                      <option value="ECG">ECG</option><option value="ECT">ECT</option>
+                    </optgroup>
+                    <optgroup label="Littéraires">
+                      <option value="A/L">A/L</option><option value="B/L">B/L</option><option value="Chartes">Chartes</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">Activité</label>
+                  <input required type="text" id="activity" class="w-full rounded-xl border border-slate-300 p-2.5 text-sm" placeholder="Football, Basket..." />
+                </div>
+              </div>
+              <button type="submit" id="submitBtn" disabled class="w-full bg-slate-900 text-white font-medium py-3 rounded-xl hover:bg-slate-800 transition disabled:opacity-40">
                 Confirmer la réservation
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- SECTION 2 : TOURNOI DE FOOT -->
+    <section id="sectionTournament" class="hidden space-y-8">
+      
+      <!-- Classements de poules -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          <i data-lucide="shield" class="w-5 h-5 text-slate-500"></i> Phase de Poules
+        </h2>
+        <div id="poolsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Injecté en JS -->
+        </div>
+      </div>
+
+      <!-- Matchs & Résultats -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-slate-500"></i> Calendrier des Matchs
+          </h3>
+          <div id="matchesList" class="space-y-3">
+            <!-- Injecté en JS -->
+          </div>
+        </div>
+
+        <!-- Phases finales -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <i data-lucide="award" class="w-5 h-5 text-amber-500"></i> Phases Finales
+          </h3>
+          <div id="finalsList" class="space-y-3">
+            <!-- Injecté en JS -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
   </div>
 
-  <!-- MODAL -->
+  <!-- MODAL CONFIRMATION -->
   <div id="modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-6">
       <div class="text-center space-y-2">
         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600">
           <i data-lucide="check-circle" class="w-6 h-6"></i>
         </div>
-        <h3 class="text-xl font-bold text-slate-900">Réservation validée</h3>
-        <p class="text-xs text-slate-500">Le créneau est désormais bloqué dans la base de données.</p>
+        <h3 class="text-xl font-bold">Réservation validée</h3>
+        <p class="text-xs text-slate-500">Le créneau est enregistré en base de données.</p>
       </div>
-
-      <div class="bg-slate-50 p-4 rounded-xl space-y-2.5 text-sm border border-slate-100">
+      <div class="bg-slate-50 p-4 rounded-xl space-y-2 text-sm border border-slate-100">
         <div class="flex justify-between"><span class="text-slate-500">Date :</span> <span id="summaryDate" class="font-medium"></span></div>
         <div class="flex justify-between"><span class="text-slate-500">Créneau :</span> <span id="summarySlot" class="font-medium"></span></div>
         <div class="flex justify-between"><span class="text-slate-500">Activité :</span> <span id="summaryActivity" class="font-medium"></span></div>
         <div class="flex justify-between"><span class="text-slate-500">Filière :</span> <span id="summaryTrack" class="font-medium"></span></div>
         <div class="flex justify-between"><span class="text-slate-500">Responsable :</span> <span id="summaryName" class="font-medium"></span></div>
       </div>
-
       <div class="space-y-2">
-        <button id="icsBtn" class="w-full bg-slate-900 text-white py-2.5 rounded-xl font-medium hover:bg-slate-800 flex items-center justify-center gap-2 transition">
+        <button id="icsBtn" class="w-full bg-slate-900 text-white py-2.5 rounded-xl font-medium hover:bg-slate-800 flex items-center justify-center gap-2">
           <i data-lucide="download" class="w-4 h-4"></i> Télécharger l'événement (.ics)
         </button>
-        <button id="closeModalBtn" class="w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl font-medium hover:bg-slate-200 transition">
-          Fermer
-        </button>
+        <button id="closeModalBtn" class="w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl font-medium hover:bg-slate-200">Fermer</button>
       </div>
     </div>
   </div>
@@ -174,10 +178,33 @@
   <script>
     lucide.createIcons();
 
+    // 1. NAVIGATION ONGLETS
+    const tabBookingBtn = document.getElementById("tabBookingBtn");
+    const tabTournamentBtn = document.getElementById("tabTournamentBtn");
+    const sectionBooking = document.getElementById("sectionBooking");
+    const sectionTournament = document.getElementById("sectionTournament");
+
+    tabBookingBtn.addEventListener("click", () => {
+      tabBookingBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition bg-white text-slate-900 shadow-sm flex items-center gap-2";
+      tabTournamentBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 flex items-center gap-2";
+      sectionBooking.classList.remove("hidden");
+      sectionTournament.classList.add("hidden");
+    });
+
+    tabTournamentBtn.addEventListener("click", () => {
+      tabTournamentBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition bg-white text-slate-900 shadow-sm flex items-center gap-2";
+      tabBookingBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 flex items-center gap-2";
+      sectionTournament.classList.remove("hidden");
+      sectionBooking.classList.add("hidden");
+      loadTournamentData();
+    });
+
+    // 2. CONFIGURATION SUPABASE
     const SUPABASE_URL = "https://wmlziwtvoftjcgxmxajm.supabase.co";
     const SUPABASE_KEY = "sb_publishable_YV0umDU5q_5xORqMAzht4g_qeQov_vJ";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // 3. LOGIQUE RÉSERVATIONS
     const SLOTS = [
       { id: "1", start: "15:00", end: "16:30" },
       { id: "2", start: "16:30", end: "18:00" },
@@ -195,50 +222,27 @@
     const errorBanner = document.getElementById("errorBanner");
     const errorMessage = document.getElementById("errorMessage");
 
-    function showError(msg) {
-      errorMessage.textContent = msg;
-      errorBanner.classList.remove("hidden");
-    }
-
-    function clearError() {
-      errorBanner.classList.add("hidden");
-      errorMessage.textContent = "";
-    }
-
     dateInput.addEventListener("change", async (e) => {
-      clearError();
+      errorBanner.classList.add("hidden");
       selectedSlot = null;
       submitBtn.disabled = true;
       selectedDate = e.target.value;
+      if (!selectedDate) { slotsContainer.classList.add("hidden"); return; }
 
-      if (!selectedDate) {
-        slotsContainer.classList.add("hidden");
-        return;
-      }
-
-      const dayOfWeek = new Date(selectedDate).getDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        showError("Le terrain est strictement fermé les samedis et dimanches.");
+      const day = new Date(selectedDate).getDay();
+      if (day === 0 || day === 6) {
+        errorMessage.textContent = "Le terrain est fermé le week-end.";
+        errorBanner.classList.remove("hidden");
         dateInput.value = "";
         slotsContainer.classList.add("hidden");
         return;
       }
 
-      slotsList.innerHTML = "<p class='text-xs text-slate-400'>Chargement des disponibilités...</p>";
+      slotsList.innerHTML = "<p class='text-xs text-slate-400'>Chargement...</p>";
       slotsContainer.classList.remove("hidden");
 
-      const { data, error } = await sb
-        .from('bookings')
-        .select('slot_id, track')
-        .eq('date', selectedDate);
-
-      if (error) {
-        showError("Erreur de connexion à la base.");
-        bookingsForDate = [];
-      } else {
-        bookingsForDate = data || [];
-      }
-
+      const { data } = await sb.from('bookings').select('slot_id, track').eq('date', selectedDate);
+      bookingsForDate = data || [];
       renderSlots();
     });
 
@@ -247,114 +251,150 @@
       SLOTS.forEach(slot => {
         const btn = document.createElement("button");
         btn.type = "button";
-        
         const booking = bookingsForDate.find(b => b.slot_id === slot.id);
         const isBooked = !!booking;
         const isSelected = selectedSlot && selectedSlot.id === slot.id;
-        
         btn.disabled = isBooked;
-
         btn.className = `w-full flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition ${
-          isBooked
-            ? "bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed"
-            : isSelected 
-              ? "bg-slate-900 text-white border-slate-900 shadow-sm" 
-              : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
+          isBooked ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed" :
+          isSelected ? "bg-slate-900 text-white border-slate-900 shadow-sm" :
+          "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
         }`;
-
-        const statusHtml = isBooked 
-          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-200 text-slate-700 text-xs font-semibold">
-               <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-               Occupé (${booking.track})
-             </span>`
-          : `<span class="text-xs uppercase tracking-wider font-semibold">
-               ${isSelected ? "Sélectionné" : "Disponible"}
-             </span>`;
-
         btn.innerHTML = `
-          <span class="flex items-center gap-2">
-            <i data-lucide="clock" class="w-4 h-4"></i>
-            ${slot.start} - ${slot.end}
-          </span>
-          ${statusHtml}
+          <span class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> ${slot.start} - ${slot.end}</span>
+          ${isBooked ? `<span class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-xs font-semibold">Occupé (${booking.track})</span>` :
+          `<span class="text-xs uppercase tracking-wider font-semibold">${isSelected ? "Sélectionné" : "Disponible"}</span>`}
         `;
-
         if (!isBooked) {
-          btn.addEventListener("click", () => {
-            selectedSlot = slot;
-            submitBtn.disabled = false;
-            renderSlots();
-          });
+          btn.addEventListener("click", () => { selectedSlot = slot; submitBtn.disabled = false; renderSlots(); });
         }
-
         slotsList.appendChild(btn);
       });
       lucide.createIcons();
     }
 
     const form = document.getElementById("bookingForm");
-    const modal = document.getElementById("modal");
-
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!selectedDate || !selectedSlot) return;
-
       submitBtn.disabled = true;
-      submitBtn.textContent = "Validation en cours...";
-
+      submitBtn.textContent = "Enregistrement...";
       const newBooking = {
-        date: selectedDate,
-        slot_id: selectedSlot.id,
+        date: selectedDate, slot_id: selectedSlot.id,
         first_name: document.getElementById("firstName").value,
         last_name: document.getElementById("lastName").value,
         email: document.getElementById("email").value,
         track: document.getElementById("track").value,
         activity: document.getElementById("activity").value
       };
-
       const { error } = await sb.from('bookings').insert([newBooking]);
-
       submitBtn.textContent = "Confirmer la réservation";
-
-      if (error) {
-        showError("Ce créneau vient déjà d'être réservé par une autre personne.");
-        submitBtn.disabled = false;
-        return;
-      }
-
+      if (error) { alert("Ce créneau est déjà pris !"); submitBtn.disabled = false; return; }
       document.getElementById("summaryDate").textContent = selectedDate;
       document.getElementById("summarySlot").textContent = `${selectedSlot.start} - ${selectedSlot.end}`;
       document.getElementById("summaryActivity").textContent = newBooking.activity;
       document.getElementById("summaryTrack").textContent = newBooking.track;
       document.getElementById("summaryName").textContent = `${newBooking.first_name} ${newBooking.last_name}`;
-
-      modal.classList.remove("hidden");
+      document.getElementById("modal").classList.remove("hidden");
     });
 
     document.getElementById("closeModalBtn").addEventListener("click", () => {
-      modal.classList.add("hidden");
-      form.reset();
-      dateInput.value = "";
-      selectedSlot = null;
-      slotsContainer.classList.add("hidden");
-      submitBtn.disabled = true;
+      document.getElementById("modal").classList.add("hidden");
+      form.reset(); dateInput.value = ""; selectedSlot = null; slotsContainer.classList.add("hidden");
     });
 
-    document.getElementById("icsBtn").addEventListener("click", () => {
-      const [sh, sm] = selectedSlot.start.split(":");
-      const [eh, em] = selectedSlot.end.split(":");
-      const dStart = new Date(selectedDate); dStart.setHours(sh, sm);
-      const dEnd = new Date(selectedDate); dEnd.setHours(eh, em);
-      const formatICS = (d) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    // 4. LOGIQUE TOURNOI (Calcul classement + affichage)
+    async function loadTournamentData() {
+      const [teamsRes, matchesRes] = await Promise.all([
+        sb.from('tournament_teams').select('*'),
+        sb.from('tournament_matches').select('*')
+      ]);
 
-      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:Terrain CPGE - ${document.getElementById("activity").value}\nDTSTART:${formatICS(dStart)}\nDTEND:${formatICS(dEnd)}\nDESCRIPTION:Responsable : ${document.getElementById("firstName").value} ${document.getElementById("lastName").value} (${document.getElementById("track").value})\nEND:VEVENT\nEND:VCALENDAR`;
+      const teams = teamsRes.data || [];
+      const matches = matchesRes.data || [];
 
-      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `reservation-terrain-${selectedDate}.ics`;
-      a.click();
-    });
+      renderPools(teams, matches);
+      renderMatches(matches);
+    }
+
+    function renderPools(teams, matches) {
+      const poolsContainer = document.getElementById("poolsContainer");
+      poolsContainer.innerHTML = "";
+
+      // Séparer les équipes par poule
+      const pools = {};
+      teams.forEach(t => {
+        if (!pools[t.pool]) pools[t.pool] = [];
+        pools[t.pool].push({ ...t, pts: 0, pj: 0, bp: 0, bc: 0, diff: 0 });
+      });
+
+      // Calculer les points d'après les matchs joués
+      matches.filter(m => m.stage === 'Poule' && m.status === 'Terminé').forEach(m => {
+        const teamA = Object.values(pools).flat().find(t => t.id === m.team_a);
+        const teamB = Object.values(pools).flat().find(t => t.id === m.team_b);
+        if (teamA && teamB) {
+          teamA.pj++; teamB.pj++;
+          teamA.bp += m.score_a; teamA.bc += m.score_b;
+          teamB.bp += m.score_b; teamB.bc += m.score_a;
+          if (m.score_a > m.score_b) teamA.pts += 3;
+          else if (m.score_a < m.score_b) teamB.pts += 3;
+          else { teamA.pts += 1; teamB.pts += 1; }
+          teamA.diff = teamA.bp - teamA.bc;
+          teamB.diff = teamB.bp - teamB.bc;
+        }
+      });
+
+      // Dessiner chaque poule
+      Object.keys(pools).forEach(poolName => {
+        const sortedTeams = pools[poolName].sort((a, b) => b.pts - a.pts || b.diff - a.diff);
+        const poolDiv = document.createElement("div");
+        poolDiv.className = "border border-slate-200 rounded-xl overflow-hidden";
+        poolDiv.innerHTML = `
+          <div class="bg-slate-100 p-3 font-bold text-sm text-slate-800">${poolName}</div>
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 border-b">
+              <tr><th class="p-2.5">Équipe</th><th class="p-2.5 text-center">MJ</th><th class="p-2.5 text-center">Diff</th><th class="p-2.5 text-center font-bold">Pts</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${sortedTeams.map((t, idx) => `
+                <tr class="${idx < 2 ? 'bg-emerald-50/40 font-medium' : ''}">
+                  <td class="p-2.5">${t.name}</td>
+                  <td class="p-2.5 text-center text-slate-500">${t.pj}</td>
+                  <td class="p-2.5 text-center text-slate-500">${t.diff > 0 ? '+'+t.diff : t.diff}</td>
+                  <td class="p-2.5 text-center font-bold text-slate-900">${t.pts}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        poolsContainer.appendChild(poolDiv);
+      });
+    }
+
+    function renderMatches(matches) {
+      const matchesList = document.getElementById("matchesList");
+      const finalsList = document.getElementById("finalsList");
+      matchesList.innerHTML = "";
+      finalsList.innerHTML = "";
+
+      matches.forEach(m => {
+        const card = document.createElement("div");
+        card.className = "p-3 border border-slate-200 rounded-xl flex items-center justify-between text-sm";
+        const scoreDisplay = m.status === 'Terminé' 
+          ? `<span class="font-bold bg-slate-100 px-2 py-1 rounded text-slate-900">${m.score_a} - ${m.score_b}</span>` 
+          : `<span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded">${m.match_date || 'À venir'}</span>`;
+
+        card.innerHTML = `
+          <div class="space-y-1">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">${m.stage}</span>
+            <div class="font-medium text-slate-800">${m.team_a} vs ${m.team_b}</div>
+          </div>
+          ${scoreDisplay}
+        `;
+
+        if (m.stage === 'Poule') matchesList.appendChild(card);
+        else finalsList.appendChild(card);
+      });
+    }
   </script>
 </body>
 </html>
